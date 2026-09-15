@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#17212b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <title>Phase 3 Physical Inventory</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -60,4 +66,4 @@ async function exportBook(){try{if(!current)return;if(!window.JSZip)throw Error(
 async function scan(){if(!('BarcodeDetector'in window)||!navigator.mediaDevices){msg('Camera scanning needs Chrome or Edge. Type the tag number instead.',true);return}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});let v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:9;object-fit:cover;background:#000';document.body.append(v);v.srcObject=stream;let stop=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;v.remove();document.removeEventListener('click',stop)};document.addEventListener('click',stop);let d=new BarcodeDetector({formats:['code_128','code_39','qr_code','ean_13','ean_8','upc_a','upc_e']});let tick=async()=>{if(!stream)return;let x=await d.detect(v).catch(()=>[]);if(x[0]){let val=x[0].rawValue;stop();$('#lookup').value=val;doFind()}else requestAnimationFrame(tick)};tick();msg('Camera open. Point at a tag; tap screen to cancel.')}catch(e){msg('Camera unavailable: '+e.message,true)}}
 function doFind(){if(!current)return;let q=$('#lookup').value.trim();if(!q){msg('Enter a tag number, asset ID, or serial number.',true);return}let r=lookup(q);if(!r){msg('No matching inventory item found.',true);return}msg('');result(r)}
 $('#loginForm').onsubmit=login;if(token)$('#login').classList.add('hidden');$('#logout').onclick=logout;$('#sync').onclick=syncAll;$('#toggleSidebar').onclick=()=>{$('#layout').classList.toggle('sidebar-hidden');$('#toggleSidebar').textContent=$('#layout').classList.contains('sidebar-hidden')?'Show workbooks':'Hide workbooks'};$('#choose').onclick=()=>$('#file').click();$('#file').onchange=e=>importFiles(e.target.files);$('#drop').ondragover=e=>{e.preventDefault();$('#drop').classList.add('drag')};$('#drop').ondragleave=()=>$('#drop').classList.remove('drag');$('#drop').ondrop=e=>{e.preventDefault();$('#drop').classList.remove('drag');importFiles(e.dataTransfer.files)};$('#find').onclick=doFind;$('#lookup').onkeydown=e=>{if(e.key==='Enter')doFind()};$('#scan').onclick=scan;$('#export').onclick=exportBook;$('#remove').onclick=async()=>{if(current&&confirm('Remove this workbook and its field changes from this device?')){viewIds.delete(current.id);await erase(current.id);current=null;activeRow=null;render()}};openDb().then(async()=>{await render();if(token)await syncAll()}).catch(e=>msg('Local storage could not start: '+e.message,true));
-</script></body></html>
+</script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>
